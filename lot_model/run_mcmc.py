@@ -94,8 +94,9 @@ if __name__ == "__main__":
 	data = collapse_lsts_to_dct(data)
 
 
+	hyps_out = run("1100001100001100", CHAINS, STEPS, TOPN, ALPHA, REQUIRE_N)
 
-	hyps_out = run("000010101010", CHAINS, STEPS, TOPN, ALPHA, REQUIRE_N)
+	#hyps_out = run("001001001001001", CHAINS, STEPS, TOPN, ALPHA, REQUIRE_N)
 	hyps_gen = get_hyp_gen(hyps_out)
 	hyps_gen_probs = get_hyp_probs(hyps_gen, start=0, end=14)
 

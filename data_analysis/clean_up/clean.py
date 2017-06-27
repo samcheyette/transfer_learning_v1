@@ -59,7 +59,9 @@ def getGoodData(file):
 	return conds	
 
 def output(data, conds, outfile, whichcare=2):
-	out = "consistent, condition, timestep, subject, correct, which\n"
+	out = "consistent, condition, timestep, subject, correct, which, prevexp\n"
+
+	out = "consistent, condition, timestep, subject, correct, which, prevexp\n"
 
 	subj = 0
 	for k in data:
@@ -88,11 +90,12 @@ def output(data, conds, outfile, whichcare=2):
 				corr2 = (stm2 == rsp2) * 1
 
 				if whichcare == 0 or whichcare == 2:
-					out += "%d, %s, %d, %d, %d, %d\n" % (cons, s1, t, 
-										subj, corr1, 0)
+					out += "%d, %s, %d, %d, %d, %d, %s\n" % (cons, s1, t, 
+										subj, corr1, 0, s2)
+				
 				if whichcare==1 or whichcare == 2:
-					out += "%d, %s, %d, %d, %d, %d\n" % (cons, s2, t,
-											subj, corr2, 1)
+					out += "%d, %s, %d, %d, %d, %d, %s\n" % (cons, s2, t,
+											subj, corr2, 1, s1)
 
 			subj += 1
 

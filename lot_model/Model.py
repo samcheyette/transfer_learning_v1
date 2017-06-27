@@ -18,7 +18,7 @@ def append(s1, s2):
         return out[:MAX]
 
 @primitive
-def repeat(x, n):
+def repeat(x, n=MAX):
     out =""
     i = 0
     while len(out) < MAX and i < n:
@@ -57,19 +57,26 @@ def alternate_and_weave(s1, s2, x1, incr):
 def weave(s1, s2):
     ind = 0
     out = ""
-
-
     while (ind < len(s1) and ind < len(s2)
                  and len(out) < MAX):
         out += s1[ind]
-
         out += s2[ind]
-
         ind += 1
-       
+    return out[:MAX]
 
 
-        return out[:MAX]
+@primitive
+def increment(s1, s2, n):
+    out = ""
+    app = ""
+    i=0
+    while (i < n and len(out) < MAX):
+        out += app
+        out += s2
+        app += s1
+        i += 1
+    return out[:MAX]
+
 
 @primitive
 def invert(x):
@@ -109,30 +116,31 @@ def from_n(x, n):
 
 grammar = Grammar(start='TERM')
 
-for i in xrange(0,7):
-	grammar.add_rule('INT', str(i), None, 1.0) #
+for i in xrange(0,11):
+	grammar.add_rule('INT', str(i), None, 1.0/(i+1.0)**2) #
 grammar.add_rule('INT', str(INF), None, 1.0)
 
 
-grammar.add_rule('TERM', "'0'", None, 4.0)
-grammar.add_rule('TERM', "'1'", None, 4.0)
+grammar.add_rule('TERM', "'0'", None, 5.0)
+grammar.add_rule('TERM', "'1'", None, 5.0)
 #grammar.add_rule('TERM', "'0'*25", None, 1.0)
 #grammar.add_rule('TERM', "'1'*25", None, 1.0)
 
-grammar.add_rule('TERM', "repeat('0', 25)", None, 2.0)
-grammar.add_rule('TERM', "repeat('1', 25)", None, 2.0)
-
-grammar.add_rule('TERM', 'append', ['TERM', 'TERM'], 1.0) 
+#grammar.add_rule('TERM', "repeat('0')", None, 2.0)
+#grammar.add_rule('TERM', "repeat('1')", None, 2.0)
+#grammar.add_rule('TERM', 'repeat', ['TERM'], 1.0)
 grammar.add_rule('TERM', 'repeat', ['TERM', 'INT'], 1.0)
-#grammar.add_rule('TERM', 'increment', ['INT', 'INT', 'INT'], 0.5) 
 
-#grammar.add_rule('TERM', 'weave', ['TERM', 'TERM'], 0.25) 
+grammar.add_rule('TERM', 'append', ['TERM', 'TERM'], 0.25) 
+grammar.add_rule('TERM', 'increment', ['TERM', 'TERM', 'INT'], 0.15) 
+
+grammar.add_rule('TERM', 'weave', ['TERM', 'TERM'], 0.25) 
 grammar.add_rule('TERM', 'invert', ['TERM'], 1.0) 
 #grammar.add_rule('TERM', 'take_n', ['TERM', 'INT'], 0.5) 
 grammar.add_rule('TERM', 'from_n', ['TERM', 'INT'], 1.0) 
-grammar.add_rule('TERM', 'alternate', ['TERM', 'TERM', 'INT'], 1.0) 
-grammar.add_rule('TERM', 'alternate_and_weave', ['TERM', 'TERM', 'INT', 'INT'],
-                                                 1.0) 
+grammar.add_rule('TERM', 'alternate', ['TERM', 'TERM', 'INT'], 0.25) 
+#grammar.add_rule('TERM', 'alternate_and_weave', ['TERM', 'TERM', 'INT', 'INT'],
+                                            #     1.0) 
 ######################################################################
 ######################################################################
 

@@ -83,18 +83,19 @@ p.2 <- ggplot(data=m.2, aes(x=timestep2, y=prob_at_time, group=consistent)) +
 				 ymin=prob_at_time-std_err, group=consistent), 
 				size=0.5, alpha=0.6)  +
 			geom_point(data=m.1, aes(x=timestep2, y=prob_at_time,
-						 colour="Training"), size=4.0)
+						 colour="Training"), size=6.0)
 
 
-p.2 <- p.2 +  xlab("Trial bins") + ylab("% above chance") + t1 +
+p.2 <- p.2 +  xlab("Trial bins") + ylab("% above chance") + t1 +	
+			ggtitle("Performance on  transfer sequence") +
 			 scale_x_discrete( expand = waiver(),
 			 	limits=c("1-3", "4-6", "7-9", "10-12", "13-15"))  +
 			 scale_fill_manual(values=c("#990000", "#009900"),
-			 				labels=c("Congruous","Incongruous"))  +
+			 				labels=c("Incongruous", "Congruous"))  +
 			 scale_color_manual(values=c("#000000"))
 
 
-ggsave("acc_over_time.pdf", height=9, width=16)
+ggsave("acc_over_time.png", height=9, width=16)
 
 
 
