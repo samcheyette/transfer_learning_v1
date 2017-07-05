@@ -1,6 +1,8 @@
 from LOTlib.Primitives import primitive
 from LOTlib.Miscellaneous import Infinity
 from LOTlib.Grammar import Grammar
+from collections import defaultdict
+import numpy
 from helpers import *
 
 
@@ -62,11 +64,49 @@ def weave(s1, s2):
         out += s1[ind]
         out += s2[ind]
         ind += 1
+
+    if ind < len(s1) and len(out) < MAX:
+        out += s1[ind:]
+    elif ind < len(s2) and len(out) < MAX:
+        out += s2[ind:]    
+    return out[:MAX]
+
+
+
+@primitive
+def insert(s1, s2, n):
+    if n == 0:
+        return s1
+    ind1 = 0
+    out = ""
+    while (ind1 < len(s1) and len(out) < MAX):
+        if ind1 % n == 0:
+            out += s2
+
+        out += s1[ind1]
+        ind1 += 1
     return out[:MAX]
 
 
 @primitive
-def increment(s1, s2, n):
+def replace(s1, s2, n):
+    if n == 0:
+        return s1
+    ind1 = 0
+    out = ""
+    while (ind1 < len(s1) and len(out) < MAX):
+        add = 1
+        if ind1 % n == 0:
+            out += s2
+            add += 1
+        out += s1[ind1]
+
+        ind1 += add
+    return out[:MAX]
+
+
+@primitive
+def increment(s1, s2, n, m):
     out = ""
     app = ""
     i=0
@@ -74,7 +114,7 @@ def increment(s1, s2, n):
         out += app
         out += s2
         app += s1
-        i += 1
+        i += m
     return out[:MAX]
 
 
@@ -116,31 +156,81 @@ def from_n(x, n):
 
 grammar = Grammar(start='TERM')
 
-for i in xrange(0,11):
-	grammar.add_rule('INT', str(i), None, 1.0/(i+1.0)**2) #
-grammar.add_rule('INT', str(INF), None, 1.0)
+for i in xrange(0,15):
+	grammar.add_rule('INT', str(i), None, 1.0) #
+grammar.add_rule('INT', str(INF), None, 4.0)
 
 
 grammar.add_rule('TERM', "'0'", None, 5.0)
 grammar.add_rule('TERM', "'1'", None, 5.0)
-#grammar.add_rule('TERM', "'0'*25", None, 1.0)
-#grammar.add_rule('TERM', "'1'*25", None, 1.0)
+grammar.add_rule('TERM', "'0'*20", None, 1.0)
+grammar.add_rule('TERM', "'1'*20", None, 1.0)
 
 #grammar.add_rule('TERM', "repeat('0')", None, 2.0)
 #grammar.add_rule('TERM', "repeat('1')", None, 2.0)
 #grammar.add_rule('TERM', 'repeat', ['TERM'], 1.0)
-grammar.add_rule('TERM', 'repeat', ['TERM', 'INT'], 1.0)
+grammar.add_rule('TERM', 'repeat', ['TERM', 'INT'], 0.5)
 
-grammar.add_rule('TERM', 'append', ['TERM', 'TERM'], 0.25) 
-grammar.add_rule('TERM', 'increment', ['TERM', 'TERM', 'INT'], 0.15) 
+grammar.add_rule('TERM', 'append', ['TERM', 'TERM'], 0.125) 
+grammar.add_rule('TERM', 'increment', ['TERM', 'TERM', 'INT', 'INT'], 0.05) 
 
-grammar.add_rule('TERM', 'weave', ['TERM', 'TERM'], 0.25) 
-grammar.add_rule('TERM', 'invert', ['TERM'], 1.0) 
+grammar.add_rule('TERM', 'weave', ['TERM', 'TERM'], 0.125) 
+grammar.add_rule('TERM', 'insert', ['TERM', 'TERM', 'INT'], 0.25) 
+#grammar.add_rule('TERM', 'replace', ['TERM', 'TERM', 'INT'], 0.25) 
+
+grammar.add_rule('TERM', 'invert', ['TERM'], 0.25) 
 #grammar.add_rule('TERM', 'take_n', ['TERM', 'INT'], 0.5) 
-grammar.add_rule('TERM', 'from_n', ['TERM', 'INT'], 1.0) 
-grammar.add_rule('TERM', 'alternate', ['TERM', 'TERM', 'INT'], 0.25) 
+grammar.add_rule('TERM', 'from_n', ['TERM', 'INT'], 0.25) 
+grammar.add_rule('TERM', 'alternate', ['TERM', 'TERM', 'INT'], 0.125) 
 #grammar.add_rule('TERM', 'alternate_and_weave', ['TERM', 'TERM', 'INT', 'INT'],
                                             #     1.0) 
+
+#####################################################################
+def get_rule_counts(grammar, t, add_counts ={}):
+    """
+            A list of vectors of counts of how often each nonterminal is expanded each way
+
+            TODO: This is probably not super fast since we use a hash over rule ids, but
+                    it is simple!
+    """
+
+    counts = defaultdict(int) # a count for each hash type
+
+    for x in t:
+        if type(x) != FunctionNode:
+            raise NotImplementedError("Rational rules not implemented for bound variables")
+        
+        counts[x.get_rule_signature()] += 1 
+
+
+    for k in add_counts:
+        counts[k] += add_counts[k]
+
+    # and convert into a list of vectors (with the right zero counts)
+    out = []
+    for nt in grammar.rules.keys():
+        v = numpy.array([ counts.get(r.get_rule_signature(),0) for r in grammar.rules[nt] ])
+        out.append(v)
+    return out
+
+
+def RR_prior(grammar, t, alpha=1.0, add_counts={}):
+    """
+            Compute the rational rules prior from Goodman et al.
+
+            NOTE: This has not yet been extensively debugged, so use with caution
+
+            TODO: Add variable priors (different vectors, etc)
+    """
+    lp = 0.0
+
+    for c in get_rule_counts(grammar, t, add_counts=add_counts):
+        theprior = numpy.array( [alpha] * len(c), dtype=float )
+        #theprior = np.repeat(alpha,len(c)) # Not implemented in numpypy
+        lp += (beta(c+theprior) - beta(theprior))
+    return lp
+
+
 ######################################################################
 ######################################################################
 
@@ -152,9 +242,11 @@ from LOTlib.Miscellaneous import Infinity, beta, attrmem
 from LOTlib.FunctionNode import FunctionNode
 from math import log, exp
 
+
 class MyHypothesis(LOTHypothesis):
     def __init__(self, **kwargs):
 
+        self.start_counts = {}
         LOTHypothesis.__init__(self, grammar=grammar,
         maxnodes=400, display='lambda : %s', **kwargs)
 
@@ -192,6 +284,23 @@ class MyHypothesis(LOTHypothesis):
 
 
 
+    @attrmem('prior')
+    def compute_prior(self,  rr_alpha=1.0):
+        """
+            Rational rules prior
+        """
+        if self.value.count_subnodes() > self.maxnodes:
+            return -Infinity
+        else:
+
+            # compute the prior with either RR or not.
+            return ((RR_prior(self.grammar, self.value,
+                     alpha=rr_alpha,
+                     add_counts=self.start_counts)) / 
+                            self.prior_temperature)
+
+
+
 
 if __name__ == "__main__":
     from LOTlib.SampleStream import *
@@ -201,10 +310,34 @@ if __name__ == "__main__":
     import copy
     lst = "00110011"
     stps = 100000
- 
-    h0 = MyHypothesis()
-    data = [FunctionData(alpha=1.0-10e-6, input=(), output={lst: len(lst)})]
+    #print insert('110001100011000', '0', 7)
+    print weave('0000000000','001001001001')
+    print insert('001001001001','0', 3)
 
+    #print weave_every('000000000', '1', 3)
+
+    data = [FunctionData(alpha=1.0-10e-6, input=(), output={lst: len(lst)})]
+    rules_iter = grammar.enumerate(2)
+
+    start_counts = {}
+    #for r in grammar:
+       # if '0' in r.get_rule_signature()[1]:
+         #   start_counts[r.get_rule_signature()] = 1
+
+
+    s = 0
+    for _ in xrange(5):
+        h = rules_iter.next()
+        h0 = MyHypothesis()
+        h0.start_counts = start_counts
+        #for h in grammar.get_rule
+        #print h0.__dict__.get('rrAlpha', 1.0)
+
+        h0.set_value(value=h)
+        h0.compute_prior()
+        h0.compute_likelihood(data)
+        print s, h0.value, exp(h0.prior) #, h0.likelihood
+        s += 1
     #unit_tests()
     assert(False)
     stp = 0

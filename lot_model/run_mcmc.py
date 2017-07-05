@@ -8,20 +8,24 @@ import time
 import copy
 
 
-def run(lst, CHAINS, STEPS, TOPN, ALPHA, REQUIRE_N):
+def run(lst, CHAINS, STEPS, TOPN, ALPHA, REQUIRE_N, 
+				start_counts={}, PRIOR_TEMP=1.0):
 
-	h0 = MyHypothesis()
+	h0 = MyHypothesis(prior_temperature=PRIOR_TEMP)
+	h0.start_counts = start_counts
+
 	data = [FunctionData(alpha=ALPHA, require_n=REQUIRE_N,
 			input=(), output={lst: len(lst)})]
 
 	chain = 0
 	best_posterior = None
 	t1 = time.time()
-
+	print grammar, "*"
 	tn = TopN(N=TOPN)
 	while chain < CHAINS:
 		stp = 0
-		for h in MHSampler(h0, data, steps=STEPS):
+		for h in MHSampler(h0, data, steps=STEPS,
+				 prior_temperature=PRIOR_TEMP):
 			r = h()
 			tn.add(h)
 			if best_posterior == None or h.posterior_score > best_posterior:
@@ -64,18 +68,6 @@ def run(lst, CHAINS, STEPS, TOPN, ALPHA, REQUIRE_N):
 	sort_post_probs = sorted(pp, key=lambda tup: 1 - tup[1])
 	return sort_post_probs
 
-
-def run_wrapper(data_dct):
-
-	for training in data_dct.keys():
-		hyps_out = run(training, CHAINS, STEPS, TOPN, ALPHA, REQUIRE_N)
-
-		#for h in hyps_out:
-
-		#for datum in data_dct[data]:
-			#for lst in datum:
-				#r = run(lst)
-
 	
 
 
@@ -94,7 +86,8 @@ if __name__ == "__main__":
 	data = collapse_lsts_to_dct(data)
 
 
-	hyps_out = run("1100001100001100", CHAINS, STEPS, TOPN, ALPHA, REQUIRE_N)
+	hyps_out = run("010110101101011", CHAINS, STEPS, TOPN,
+						 ALPHA, REQUIRE_N, PRIOR_TEMP=0.9)
 
 	#hyps_out = run("001001001001001", CHAINS, STEPS, TOPN, ALPHA, REQUIRE_N)
 	hyps_gen = get_hyp_gen(hyps_out)
