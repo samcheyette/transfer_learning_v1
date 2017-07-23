@@ -33,7 +33,7 @@ def run_wrapper(training, transfer,which, add_counts={}):
 	#print transfer
 
 	if which == "rrules" or which == "both":
-		hyps_out = run(training, CHAINS, STEPS, TOPN, 
+		hyps_out = run(training, CHAINS, STEPS*2, TOPN, 
 			ALPHA, REQUIRE_N, add_counts, PRIOR_TEMP)
 		for hp in hyps_out:
 			cplx = len(hp[0].value)
@@ -41,7 +41,7 @@ def run_wrapper(training, transfer,which, add_counts={}):
 
 				if x.get_rule_signature() not in add_counts:
 					add_counts[x.get_rule_signature()] = 0
-				add_counts[x.get_rule_signature()] += 2.0 * hp[1]/float(cplx)
+				add_counts[x.get_rule_signature()] += 4.0* hp[1]/float(cplx)
 			print hp
 
 		print "x*" * 50
@@ -67,12 +67,8 @@ def run_wrapper(training, transfer,which, add_counts={}):
 		ret_dct[seq] = [0.5]
 		x = 0
 		for l in transf[:len(transf)-1]:
-			if len(l) < 9:
-				nchains = CHAINS - 1
-			else:
-				nchains = CHAINS
 			#print l
-			hyps_out = run(l, nchains, STEPS, TOPN, 
+			hyps_out = run(l, CHAINS, STEPS, TOPN, 
 				ALPHA, REQUIRE_N, add_counts, PRIOR_TEMP)
 			print training, l
 			for hp in hyps_out:

@@ -1,5 +1,6 @@
 import string
 import copy
+from analyze_sim_exp_data import *
 
 #JUST A FILE TO CLEAN UP THE DATA...
 #BORING STRING FORMATTING STUFF....
@@ -58,10 +59,10 @@ def getGoodData(file):
 
 	return conds	
 
-def output(data, conds, outfile, whichcare=2):
-	out = "consistent, condition, timestep, subject, correct, which, prevexp\n"
+def output(data, conds, similarity, outfile, whichcare=2):
+	out = "consistent, condition, timestep, subject, correct, which, prevexp, sim\n"
 
-	out = "consistent, condition, timestep, subject, correct, which, prevexp\n"
+	out = "consistent, condition, timestep, subject, correct, which, prevexp, sim\n"
 
 	subj = 0
 	for k in data:
@@ -89,13 +90,22 @@ def output(data, conds, outfile, whichcare=2):
 				corr1 = (stm1 == rsp1) * 1
 				corr2 = (stm2 == rsp2) * 1
 
+				sim = 0.0
+				if (s1, s2) in similarity:
+					sim = (sum(similarity[(s1,s2)])/
+								float(len(similarity[(s1,s2)])))
+
+				else:
+					sim = (sum(similarity[(s2,s1)])/
+					float(len(similarity[(s2,s1)])))	
+
 				if whichcare == 0 or whichcare == 2:
-					out += "%d, %s, %d, %d, %d, %d, %s\n" % (cons, s1, t, 
-										subj, corr1, 0, s2)
+					out += "%d, %s, %d, %d, %d, %d, %s, %f\n" % (cons, s1, t, 
+										subj, corr1, 0, s2, sim)
 				
 				if whichcare==1 or whichcare == 2:
-					out += "%d, %s, %d, %d, %d, %d, %s\n" % (cons, s2, t,
-											subj, corr2, 1, s1)
+					out += "%d, %s, %d, %d, %d, %d, %s, %f\n" % (cons, s2, t,
+											subj, corr2, 1, s1, sim)
 
 			subj += 1
 
@@ -108,9 +118,20 @@ if __name__ == "__main__":
 	import random
 
 	file = "data.csv"
-	outfile = "outR.csv"
+	outfile = "outR_sim.csv"
 
 	cleanData = getGoodData(file)
+	for c in cleanData:
+		print c, cleanData[c]
+
+	sim_exp_data = get_clean_data("sim_exp.csv")
+	lst_sim_data = []
+	for d in sim_exp_data:
+		lst_sim_data.append((d, sum(sim_exp_data[d])/float(len(sim_exp_data[d]))))
+	lst_sim_data = sorted(lst_sim_data, key = lambda tup: -tup[1])
+
+	for d in lst_sim_data:
+		print d[0], d[1]
 
 	gs = [('aabaabaabaabaab', 'aaabaaabaaabaaa'), 
 			  ('baabaaabaaaabaa', 'abaabaaabaaaaba'),
@@ -132,5 +153,6 @@ if __name__ == "__main__":
 		s += len(cleanData[k])
 	print s
 
-	output(cleanData, new_gs, outfile, whichcare=which)
+	output(cleanData, new_gs, sim_exp_data,
+				 outfile, whichcare=which)
 	

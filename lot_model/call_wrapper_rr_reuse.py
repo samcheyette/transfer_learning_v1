@@ -4,16 +4,16 @@ import os
 
 
 if __name__ == "__main__":
-	CHAINS= 3
-	STEPS = 15000
-	PRIOR_TEMP = 0.85
+	CHAINS= 4
+	STEPS = 8000
+	PRIOR_TEMP = 0.90
 	TOPN=100
-	ALPHA = 1.0-1.0e-4
+	ALPHA = 1.0-1.0e-5
 	#how much generalization do we need?
 	REQUIRE_N = 1
 	WHICH = "none"
 
-	output="out2.csv"
+	output="out3.csv"
 
 	data = vanilla_conditions()
 	#print data
@@ -26,6 +26,7 @@ if __name__ == "__main__":
 	if WHICH == 'none':
 		data = [data[0]] + [data[6]]
 
+	#data = [["0000000000", "0000000000"]]
 	for k in data:
 		#print k
 	#run_wrapper(data, which="reuse")

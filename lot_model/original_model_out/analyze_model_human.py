@@ -90,8 +90,34 @@ def p_mod_given_data(hum, mod, whichmod, sm=1.0e-4):
 	return logp
 
 
+def p_mod_for_each(hum, mod, sm=1.0e-4):
+	logps = {}
+	for k in mod:
+
+		pmod = mod[k]
+		nhum = sum(hum_dat[(k[1], k[2],k[3])])
+		ntot_hum =  len(hum_dat[(k[1], k[2],k[3])])
+		#p *= (pmod ** nhum) * ((1.0 - pmod) ** (ntot_hum - nhum))
+		logp = (nhum * log(min(1.0, pmod + sm)) +
+				 (ntot_hum - nhum) * log(min(1.0 - pmod + sm, 1.0)))
+
+		newk= (k[1], k[2])
+		if newk not in logps:
+			logps[newk] = {}
+
+		if k[0] not in logps[newk]:
+			logps[newk][k[0]] = 0.0
+
+
+
+		logps[newk][k[0]] += logp
+
+	return logps
+
+
+
 def output_for_r(mod, hum, out_f):
-	out = "model_human, training, transfer, congruous, timestep, pcorr\n"
+	out = "model_human, training, transfer, congruous, timestep, pcorr, LL\n"
 
 	seen = set()
 	cong_pairs = get_congruous()
@@ -101,15 +127,21 @@ def output_for_r(mod, hum, out_f):
 			cong = 1
 		else:
 			cong = 0
-		out += "%s, %s, %s, %d, %d, %f\n" % (k[0], k[1], k[2], cong, k[3], pmod)
+
+		sm = 1e-4
+		nhum = sum(hum_dat[(k[1], k[2],k[3])])
+		ntot_hum =  len(hum_dat[(k[1], k[2],k[3])])
+		logp = (nhum * log(min(1.0, pmod + sm)) +
+					 (ntot_hum - nhum) * log(min(1.0 - pmod + sm, 1.0)))
+		
+		out += ("%s, %s, %s, %d, %d, %f, %f\n" % (k[0], k[1],
+											 k[2], cong, k[3], 
+											 pmod, logp))
 
 		if (k[1], k[2],k[3]) not in seen:
-			nhum = sum(hum_dat[(k[1], k[2],k[3])])
-			ntot_hum =  len(hum_dat[(k[1], k[2],k[3])])
 			phum = nhum/float(ntot_hum)
-			
 
-			out += "%s, %s, %s, %d, %d, %f\n" % ("hum", k[1], k[2], 
+			out += "%s, %s, %s, %d, %d, %f, 0.0\n" % ("hum", k[1], k[2], 
 								cong, k[3], phum)
 			
 			seen.add((k[1], k[2],k[3]))
@@ -120,13 +152,15 @@ def output_for_r(mod, hum, out_f):
 
 
 if __name__ == "__main__":
-	mod_dat = get_model_data("out2.csv")
+	mod_dat = get_model_data("out3.csv")
 	hum_dat = get_human_data("out_human.csv")
-
 	cong = get_congruous()
 
-	(rule, norm_rule, reuse, norm_reuse, none,norm_none, hum, norm_hum) = (0.0,
-											0.0,0.0,0.0, 0.0, 0.0, 0.0,0.0)
+	(rule, norm_rule, reuse, 
+		norm_reuse, none,norm_none, 
+		hum, norm_hum, bot, norm_bot) = (0.0, 
+							0.0,0.0,0.0, 0.0, 0.0,
+								 0.0,0.0, 0.0, 0.0)
 
 	for k in mod_dat:
 		if (fromAB(k[1]), fromAB(k[2])) not in cong:
@@ -136,26 +170,55 @@ if __name__ == "__main__":
 			elif k[0] == "reuse":
 				reuse += mod_dat[k]
 				norm_reuse += 1
-			else:
+			elif k[0] == "none":
 				none += mod_dat[k]
 				norm_none += 1
-
+			else:
+				bot += mod_dat[k]
+				norm_bot += 1
 			hum += sum(hum_dat[(k[1], k[2],k[3])])
 			norm_hum += len(hum_dat[(k[1], k[2],k[3])])
 
 
-	print (rule/float(norm_rule),
+	print (hum/float(norm_hum), rule/float(norm_rule),
 				reuse/float(norm_reuse), 
-				none/float(norm_none + 10e-16),
-				hum/float(norm_hum))
+				none/float(norm_none),
+				bot/float(norm_bot))
 
 	prrules = p_mod_given_data(hum_dat, mod_dat, "rrules")
 	preuse = p_mod_given_data(hum_dat, mod_dat, "reuse")
 	pnone = p_mod_given_data(hum_dat, mod_dat, "none")
+	pboth = p_mod_given_data(hum_dat, mod_dat, "both")
+
+	peach = p_mod_for_each(hum_dat, mod_dat)
+
+	s = 0.0
+	counts = {}
+	for k in peach:
+		best = ""
+		whch = ""
+
+		if (fromAB(k[0]), fromAB(k[1])) in cong:
+			whch = "Congruous"
+		else:
+			whch = "Incongruous"
+
+		best_p = None
+		for b in peach[k]:
+			if (b,whch) not in counts:
+				counts[(b, whch)] = 0
+			if best_p == None or peach[k][b] > best_p:
+				best_p = peach[k][b]
+				best = b
+		counts[(best, whch)] += 1
+
+	print counts
+
+
+
 
 	z = [x[0] for x in mod_dat.keys()]
-	print z.count("rrules"), z.count("reuse")
-
-	print prrules, preuse, pnone
+	print z.count("none"), z.count("rrules"), z.count("reuse"), z.count("both")
+	print [-2 * x for x in [pnone, prrules, preuse, pboth]]
 
 	output_for_r(mod_dat, hum_dat, "r_analysis.csv")

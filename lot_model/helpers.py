@@ -100,6 +100,34 @@ def vanilla_conditions(appstim=True, append=True):
 
 	return all_use
 
+def vanilla_conditions_full(appstim=True, append=True):
+	stims = []
+	endings = []
+	if appstim:
+		stims = ["aabaabaabaabaabaabaabaabaabaab", 
+				 "baabaaabaaaabaaaaabaaaaaabaaaa",
+				 "aaaaaabbbbbbbbbbbbbbbbbbbbbbbb", 
+				 "bbaaabbaaabbaaabbaaabbaaabbaaa",
+				 "bbbbbababababababababababababa",
+		         "ababbababbababbababbababbababb"]
+		stims = [fromAB(s) for s in stims]
+	if append:
+		endings = ["aaabaaabaaabaaaaaabaaabaaabaaa",
+				   "abaabaaabaaaabaaaaaabaaaaaabaa", 
+				   "bbbbaaaaaaaaaaaaaaaaaaaaaaaaaa", 
+				   "bbaaaabbaaaabbaaaabbaaaabbaaaa", 
+				   "aaaabababababababababababababa",
+		           "babaababaababaababaababaababaa"]
+		endings = [fromAB(s) for s in endings]
+
+	all_use = []
+	for k in stims:
+		all_use.append(k)
+	for k in endings:
+		all_use.append(k)
+
+	return all_use
+
 def collapse_lsts_to_dct(lsts):
 	dct = {}
 	for l in lsts:
@@ -279,8 +307,10 @@ def get_data_conditioned(file, given_seq, whichcare):
 		corr = spl[correct]
 		which = spl[train_or_transf]
 		prev = fromAB(spl[prev_experience])
-		if ((whichcare == '1' and which == '1' and prev == given_seq) or
-			(whichcare == '0' and which == '0' and cond == given_seq)):
+		if ((whichcare == '1' and which == '1' 
+			and prev == given_seq) or
+			(whichcare == '0' and which == '0' 
+				and (cond == given_seq or given_seq == "all"))):
 			
 
 
@@ -341,12 +371,12 @@ if __name__ == "__main__":
 					#	whichcare ='0')
 
 	x1 = get_data_conditioned("data/outR.csv", 
-						"000000111111111",
+						"010110101101011",
 						whichcare ='1')
 
 	x2 = get_data_conditioned("data/outR.csv", 
-						"001001001001001",
-						whichcare ='1')
+						"010110101101011",
+						whichcare ='0')
 	#x = get_data_by_condition("data/outR.csv", 
 						#"111100000000000", "000000111111111",
 						#whichcare ='1')
@@ -355,8 +385,10 @@ if __name__ == "__main__":
 	
 	print len(x1.keys())
 	print len(x2.keys())
-	for i in sorted(copy.deepcopy(x1.keys()), key=lambda tup: len(tup)):
-		if i in x1 and i in x2:
-			print i, x1[i][1]/float(x1[i][0] + x1[i][1]), x2[i][1]/float(x2[i][0] + x2[i][1])
+	for i in sorted(copy.deepcopy(x1.keys()),
+				 key=lambda tup: len(tup)):
+		print i, x1[i][1]/float(x1[i][0] + x1[i][1])
+		#if i in x1 and i in x2:
+			#print i, x1[i][1]/float(x1[i][0] + x1[i][1]), x2[i][1]/float(x2[i][0] + x2[i][1])
 
 

@@ -8,8 +8,8 @@ from helpers import *
 
 ##################################################################
 ####################PRIMITIVES####################################
-INF=25
-MAX = 20
+INF=35
+MAX = 35
 
 @primitive
 def append(s1, s2):
@@ -20,16 +20,15 @@ def append(s1, s2):
         return out[:MAX]
 
 @primitive
-def repeat(x, n=MAX):
-    out =""
-    i = 0
-    while len(out) < MAX and i < n:
+def repeat(x):
+    if len(x) >= MAX or len(x) < 1:
+        return x
+    else:
+        out =""
+        while len(out) < MAX:
+            out += x
 
-        out += x
-        i += 1
-
-
-    return out[:MAX]
+        return out[:MAX]
 
 
 @primitive
@@ -77,15 +76,31 @@ def weave(s1, s2):
 def insert(s1, s2, n):
     if n == 0:
         return s1
-    ind1 = 0
-    out = ""
-    while (ind1 < len(s1) and len(out) < MAX):
-        if ind1 % n == 0:
-            out += s2
+    elif len(s1) == 0:
+        return s2
+    elif len(s2) == 0:
+        return s1
 
-        out += s1[ind1]
-        ind1 += 1
-    return out[:MAX]
+    else:
+        ind1 = 0
+        out = ""
+        while (ind1 < len(s1) and len(out) < MAX):
+            if ind1 % n == 0:
+                out += s2
+
+            out += s1[ind1]
+            ind1 += 1
+        return out[:MAX]
+
+@primitive
+def delete(s, n):
+    if n <= len(s):
+        return s
+    new_out = ""
+    for i in xrange(len(s)):
+        if i % n != 0:
+            new_out += s[i]
+    return new_out
 
 
 @primitive
@@ -106,16 +121,21 @@ def replace(s1, s2, n):
 
 
 @primitive
-def increment(s1, s2, n, m):
-    out = ""
-    app = ""
-    i=0
-    while (i < n and len(out) < MAX):
-        out += app
-        out += s2
-        app += s1
-        i += m
-    return out[:MAX]
+def increment(s1, s2, n):
+
+    if len(s1) == 0:
+        return s2
+    elif len(s2) == 0:
+        return s1
+    else:
+        out = ""
+        app = ""
+        while (len(out) < MAX):
+            out += app
+            out += s2
+            app += min(1+MAX/len(s1), n) * s1
+           # app += s1
+        return out[:MAX]
 
 
 @primitive
@@ -129,18 +149,18 @@ def invert(x):
     return inv
 
 @primitive
-def alternate(s1, s2, n):
+def alternate(s1, s2):
     out = ""
-    i = 0
-    while i < n  and len(out) < MAX:
-        out += s1
-        i += 1
-        if i < n and len(out) < MAX:
-            out += s2
-        i += 1
+    if len(s1) + len(s2) == 0:
+        return ""
 
-    return out[:MAX]
+    else:
+        while len(out) < MAX:
+            out += s1
+            if len(out) < MAX:
+                out += s2
 
+        return out[:MAX]
 
 
 
@@ -149,39 +169,42 @@ def from_n(x, n):
     if len(x) > n:
         return x[n:]
     else:
-        return x
+        return ""
 
 ###################################################################
 ######################GRAMMAR######################################
 
 grammar = Grammar(start='TERM')
 
-for i in xrange(0,15):
+for i in xrange(1,8):
 	grammar.add_rule('INT', str(i), None, 1.0) #
-grammar.add_rule('INT', str(INF), None, 4.0)
+grammar.add_rule('INT', str(INF), None, 5.0)
+
 
 
 grammar.add_rule('TERM', "'0'", None, 5.0)
 grammar.add_rule('TERM', "'1'", None, 5.0)
-grammar.add_rule('TERM', "'0'*20", None, 1.0)
-grammar.add_rule('TERM', "'1'*20", None, 1.0)
+grammar.add_rule('TERM', "'0'*35", None, 2.0)
+grammar.add_rule('TERM', "'1'*35", None, 2.0)
+grammar.add_rule('TERM', 'append', ['TERM', 'TERM'], 0.25) 
+grammar.add_rule('TERM', 'increment', ['TERM', 'TERM',
+                                 'INT'], 0.125) 
+grammar.add_rule('TERM', 'insert', ['TERM', 'TERM', 'INT'], 0.125) 
+grammar.add_rule('TERM', 'from_n', ['TERM', 'INT'], 0.25) 
+grammar.add_rule('TERM', 'alternate', ['TERM', 
+                                        'TERM'], 0.125) 
+grammar.add_rule('TERM', 'invert', ['TERM'], 0.25) 
+
 
 #grammar.add_rule('TERM', "repeat('0')", None, 2.0)
 #grammar.add_rule('TERM', "repeat('1')", None, 2.0)
-#grammar.add_rule('TERM', 'repeat', ['TERM'], 1.0)
-grammar.add_rule('TERM', 'repeat', ['TERM', 'INT'], 0.5)
-
-grammar.add_rule('TERM', 'append', ['TERM', 'TERM'], 0.125) 
-grammar.add_rule('TERM', 'increment', ['TERM', 'TERM', 'INT', 'INT'], 0.05) 
-
-grammar.add_rule('TERM', 'weave', ['TERM', 'TERM'], 0.125) 
-grammar.add_rule('TERM', 'insert', ['TERM', 'TERM', 'INT'], 0.25) 
+#grammar.add_rule('TERM', 'repeat', ['TERM'], 0.25)
+#grammar.add_rule('TERM', 'repeat', ['TERM', 'INT'], 0.5)
+#grammar.add_rule('TERM', 'weave', ['TERM', 'TERM'], 0.125) 
+#grammar.add_rule('TERM', 'delete', ['TERM', 'INT'], 0.25) 
 #grammar.add_rule('TERM', 'replace', ['TERM', 'TERM', 'INT'], 0.25) 
-
-grammar.add_rule('TERM', 'invert', ['TERM'], 0.25) 
 #grammar.add_rule('TERM', 'take_n', ['TERM', 'INT'], 0.5) 
-grammar.add_rule('TERM', 'from_n', ['TERM', 'INT'], 0.25) 
-grammar.add_rule('TERM', 'alternate', ['TERM', 'TERM', 'INT'], 0.125) 
+
 #grammar.add_rule('TERM', 'alternate_and_weave', ['TERM', 'TERM', 'INT', 'INT'],
                                             #     1.0) 
 
@@ -205,6 +228,8 @@ def get_rule_counts(grammar, t, add_counts ={}):
 
     for k in add_counts:
         counts[k] += add_counts[k]
+
+
 
     # and convert into a list of vectors (with the right zero counts)
     out = []
@@ -310,14 +335,11 @@ if __name__ == "__main__":
     import copy
     lst = "00110011"
     stps = 100000
-    #print insert('110001100011000', '0', 7)
-    print weave('0000000000','001001001001')
-    print insert('001001001001','0', 3)
 
     #print weave_every('000000000', '1', 3)
 
     data = [FunctionData(alpha=1.0-10e-6, input=(), output={lst: len(lst)})]
-    rules_iter = grammar.enumerate(2)
+    rules_iter = grammar.enumerate(10)
 
     start_counts = {}
     #for r in grammar:
@@ -326,7 +348,7 @@ if __name__ == "__main__":
 
 
     s = 0
-    for _ in xrange(5):
+    for _ in xrange(50):
         h = rules_iter.next()
         h0 = MyHypothesis()
         h0.start_counts = start_counts

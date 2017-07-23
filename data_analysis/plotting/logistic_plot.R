@@ -43,7 +43,7 @@ m.1 <- data %>% filter(which == 0) %>%
 				ungroup %>%
 				mutate(std_err=((prob_at_time_real * (1-prob_at_time_real)/n_cond)**0.5)) %>%
 
-				select(timestep, timestep2, prob_at_time, consistent, std_err)
+				select(timestep, timestep2, prob_at_time_real, prob_at_time, consistent, std_err)
 
 
 
@@ -66,35 +66,57 @@ m.2 <- data %>% filter(which == 1) %>%
 				ungroup %>%
 				mutate(std_err=((prob_at_time_real * (1-prob_at_time_real)/n_cond)**0.5)) %>%
 
-				select(timestep, timestep2, prob_at_time, consistent, std_err)
+				select(timestep, timestep2, prob_at_time, prob_at_time_real, consistent, std_err)
 head(m.2)
 
 m.2$consistent <- factor(m.2$consistent)
 
+#m.2 <- m.2 %>% filter(consistent==0)
 
 
 #p.2 <- ggplot(data=m.2, aes(x=timestep, y=prob_at_time, group=consistent)) +
 		#	geom_line(aes(color=consistent))
 
-p.2 <- ggplot(data=m.2, aes(x=timestep2, y=prob_at_time, group=consistent)) +
-			geom_bar(stat='identity', position='dodge', aes(fill=consistent)) +
-			geom_errorbar(stat='identity', position='dodge',
-				aes(ymax=std_err+prob_at_time,
-				 ymin=prob_at_time-std_err, group=consistent), 
+#p.2 <- ggplot(data=m.2, aes(x=timestep2, y=prob_at_time, group=consistent)) +
+		#	geom_bar(stat='identity', position='dodge', aes(fill=consistent)) +
+		#	geom_errorbar(stat='identity', position='dodge',
+			#	aes(ymax=std_err+prob_at_time,
+			#	 ymin=prob_at_time-std_err, group=consistent), 
+			#	size=0.5, alpha=0.6)  +
+			#geom_point(data=m.1, aes(x=timestep2, y=prob_at_time,
+						# colour="Training"), size=6.0)
+
+p.2 <- ggplot(data=m.2, aes(x=timestep2, y=prob_at_time_real,
+				 group=consistent)) +
+			geom_line(aes(color=consistent), size=3.0) +
+			geom_errorbar(stat='identity',
+				aes(ymax=std_err+prob_at_time_real,
+				 ymin=prob_at_time_real-std_err, 
+				 	group=consistent), width=0.4,
 				size=0.5, alpha=0.6)  +
-			geom_point(data=m.1, aes(x=timestep2, y=prob_at_time,
-						 colour="Training"), size=6.0)
+			geom_line(data=m.1, aes(x=timestep2,
+						 y=prob_at_time_real,
+						 	 linetype="Training"),
+						  size=3.0) +
+			geom_errorbar(data=m.1, aes(x=timestep2,
+				ymax=std_err+prob_at_time_real,
+				 ymin=prob_at_time_real-std_err, 
+				 	group=consistent), width=0.4,
+				size=0.5, alpha=0.6)
 
-
-p.2 <- p.2 +  xlab("Trial bins") + ylab("% above chance") + t1 +	
-			ggtitle("Performance on  transfer sequence") +
+p.2 <- p.2 +  xlab("Trial bins") + ylab("Accuracy") + 
+				t1 + ylim(0.45,0.88) +
+			ggtitle("Performance on transfer sequence") +
 			 scale_x_discrete( expand = waiver(),
 			 	limits=c("1-3", "4-6", "7-9", "10-12", "13-15"))  +
-			 scale_fill_manual(values=c("#990000", "#009900"),
-			 				labels=c("Incongruous", "Congruous"))  +
-			 scale_color_manual(values=c("#000000"))
+			 scale_fill_manual(values=c("#990000", "#009900", "#000000"),
+			 				labels=c("Incongruent", "Congruent")) +
+			 scale_color_manual(values=c("#990000", "#009900","#000000"),
+			 	labels=c("Incongruent Transfer", "Congruent Transfer",
+			 		"Training"))+
 
-
+			 scale_linetype_manual(values=c("dotted"), 
+			 				labels=c("Training                    "))
 ggsave("acc_over_time.png", height=9, width=16)
 
 
