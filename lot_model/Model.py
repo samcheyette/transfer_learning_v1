@@ -181,18 +181,21 @@ for i in xrange(1,8):
 grammar.add_rule('INT', str(INF), None, 5.0)
 
 
+#grammar.add_rule('TERM1', "", None, 1e-10)
+#grammar.add_rule('TERM', "%s", ['TERM1'], 1.0)
+#grammar.add_rule('TERM1', "%s", ['TERM'], 0.1)
 
-grammar.add_rule('TERM', "'0'", None, 5.0)
-grammar.add_rule('TERM', "'1'", None, 5.0)
-grammar.add_rule('TERM', "'0'*35", None, 2.0)
-grammar.add_rule('TERM', "'1'*35", None, 2.0)
+grammar.add_rule('TERM', "'0'", None, 1.0)
+grammar.add_rule('TERM', "'1'", None, 1.0)
+#grammar.add_rule('TERM', "'0'*35", None, 2.0)
+#grammar.add_rule('TERM', "'1'*35", None, 2.0)
 grammar.add_rule('TERM', 'append', ['TERM', 'TERM'], 0.25) 
 grammar.add_rule('TERM', 'increment', ['TERM', 'TERM',
                                  'INT'], 0.125) 
 grammar.add_rule('TERM', 'insert', ['TERM', 'TERM', 'INT'], 0.125) 
 grammar.add_rule('TERM', 'from_n', ['TERM', 'INT'], 0.25) 
 grammar.add_rule('TERM', 'alternate', ['TERM', 
-                                        'TERM'], 0.125) 
+                                         'TERM'], 0.125) 
 grammar.add_rule('TERM', 'invert', ['TERM'], 0.25) 
 
 

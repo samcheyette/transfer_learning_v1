@@ -21,20 +21,23 @@ t1 <- 	theme(axis.text=element_text(size=18),
 		legend.text=element_text(size=17),
 		 legend.key.size = unit(6, 'lines'))
 
-BURNIN <- 2000
+
+
+BURNIN <- 10000
 
 header_f <- read.csv("header.csv")
 header <- colnames(header_f)
 
+#full <- "100100010000100000100000010000"
 
-#s1 <-  "010110101101011"
-#s2 <-  "010110101101011"
-#s1 <-  "101001010010100"
-full <- "100100010000100000100000010000"
+#s1 <- "100100010000100"
+s1 <-  "010110101101011"
+#s1 <- "000000111111111"
+#s1 <- "001001001001001"
+#s1 <- "111110101010101"
+#s1 <- "110001100011000"
 
-s1 <- "100100010000100"
 s2 <-  s1
-
 s1_tr <- "train_"
 s2_tr <- "trans_"
 f1 <- paste(s1_tr, s1, sep="")
@@ -50,11 +53,16 @@ dwide2 <- read.table(paste(s2_tr,
 
 colnames(dwide1) <- header
 colnames(dwide2) <- header
+colnames(dwide1)[ncol(dwide1)] <- s1
+colnames(dwide2)[ncol(dwide2)] <- s1
+
 dwide1 <- dwide1  %>% mutate(which=factor(f1)) %>% 
 					filter(steps < 100000)
 dwide2 <- dwide2 %>% mutate(which=factor(f2)) %>% 
 					 filter(steps < 100000) 
 dwide <- rbind(dwide1, dwide2)
+
+#weird problem...
 
 m <- melt(dwide, c("steps", "chain", "which"))
 m <- m %>% filter(!grepl("temp", as.character(variable))) %>%
@@ -74,8 +82,8 @@ m <- m %>% filter(steps %% 100 == 0) %>%
 
 #########################################################
 #if(FALSE) {
-m.1 <- m %>% filter(steps %% 200 == 0)%>% 
-		filter(grepl("train", which)) %>%
+m.1 <- m %>% filter(steps %% 1000 == 0)%>% 
+		filter(grepl("trans", which)) %>%
 
 		filter(!grepl("INT", variable)) %>%
 		mutate(which=gsub("0", "", which)) %>%
@@ -111,7 +119,13 @@ m.2 <- m %>%
 		mutate(sum_p=sum(mean_p)) %>%
 		ungroup %>%
 		mutate(variable=gsub("TERM_","", variable)) %>%
-		mutate(variable=gsub(full, "OBOOBOOO...", variable)) %>%
+		mutate(variable=gsub("0", "O", 
+				variable)) %>%
+		mutate(variable=gsub("1", "B", 
+				variable)) %>%
+
+		mutate(variable=substr(variable, 1,9)) %>%
+
 		#mutate(variable=gsub(paste(s1, "s1", sep=""),"OBOBB...", variable)) %>%
 		#mutate(variable=gsub("1","O", variable)) %>%
 		mutate(which=gsub(s1,"", which)) %>%
@@ -128,7 +142,6 @@ m.2 <- m %>%
 		mutate(mean_p = mean_p/sum(mean_p)) 
 
 
-m.2$in_var
 head(m.2)
 
 plt.2 <- ggplot(data=m.2, aes(x=variable, y=mean_p,
@@ -145,3 +158,48 @@ plt.2 <- ggplot(data=m.2, aes(x=variable, y=mean_p,
 plt.2 <- plt.2 + t1 + ylab("Prior probability") 
 
 ggsave("meanPs.png", width=16, height=6)
+
+#########################################################
+m$which <- factor(m$which)
+m$variable <- factor(m$variable)
+
+stat_sum_df <- function(fun, geom="violin", ...) {
+  stat_summary(fun.data = fun,
+   geom = geom, width = 0.2, ...)
+}
+
+m.3 <- m %>%
+		filter(!grepl("INT", variable)) %>%
+		mutate(variable=gsub("TERM_","", variable)) %>%
+		mutate(variable=gsub("0", "O", 
+				variable)) %>%
+		mutate(variable=gsub("1", "B", 
+				variable)) %>%
+
+		mutate(variable=substr(variable, 1,9))
+
+
+head(m.3)
+
+plt.3 <- ggplot(data=m.3, aes(x=variable, 
+				y=value, color=which)) +
+		#geom_point(aes(color=which), alpha=0.2) +
+		#stat_summary(fun.data="mean_cl_boot",
+			#geom="crossbar",
+			# aes(color=which), size=1.5) +
+		geom_violin(aes(color=which)) + #+
+		#facet_wrap(~variable) + 
+		#t1
+	#stat_sum_df("mean_cl_boot",
+	 #mapping = aes(group = which, color=which)) +
+		#stat_summary(fun.y=mean, 
+			#geom="point", shape=23, size=5) +
+		#stat_summary(fun.data="mean_cl_boot",
+			#aes(color=which), size=2 ) +
+
+		t1
+
+			#geom_violin(aes(group=which, color=which)) #,
+
+
+ggsave("violin_mcmc.png", width=20, height=15)

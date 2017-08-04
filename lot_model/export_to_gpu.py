@@ -1,22 +1,48 @@
 from run_mcmc import *
 import time
-
+import sys
 
 
 t_start = time.time()
 
-CHAINS=1
-STEPS = 25000
+print sys.argv
+class incr():
+	def __init__(self):
+		self.count=0
 
-TOPN=100
-ALPHA = 1.0-1.0e-4
+	def __call__(self):
+		self.count+= 1
+		return self.count
+
+counter=incr()
+
+CHAINS = int(sys.argv[counter()])
+STEPS = int(sys.argv[counter()])
+TOPN = int(sys.argv[counter()])
+ALPHA = float(sys.argv[counter()])
+REQUIRE_N = int(sys.argv[counter()])
+conditioned_on =  sys.argv[counter()]
+print CHAINS, STEPS, TOPN, ALPHA
+#PRIOR_TEMP = float(sys.argv[counter()])
+
+#REQUIRE_N = int(sys.argv[counter()])
+lsts = vanilla_conditions(appstim=True,append=True)
+full_lsts = vanilla_conditions_full(appstim=True, 
+								append=True)
+
+conditioned_on_full = None
+for l in full_lsts:
+	if l[:15] == conditioned_on:
+		conditioned_on_full = [l]
+
+print conditioned_on
+assert(conditioned_on_full != None)
+conditioned_on = [conditioned_on]
 
 #how much generalization do we need?
 # (REQ_N=15 would require sequences > length-15)
-REQUIRE_N = 1
 
 
-lsts = vanilla_conditions(appstim=True,append=True)
 
 #lsts = ["101001010010100"]
 #lsts = ["000000111111111", "111100000000000"]
@@ -30,8 +56,8 @@ lsts = vanilla_conditions(appstim=True,append=True)
 #conditioned_on =      ["101001010010100"]
 #conditioned_on_full = ["101001010010100101001010010100"]
 
-conditioned_on =      ["100100010000100"]
-conditioned_on_full = ["100100010000100000100000010000"]
+
+#conditioned_on_full = ["100100010000100000100000010000"]
 
 
 

@@ -116,8 +116,11 @@ def p_mod_for_each(hum, mod, sm=1.0e-4):
 
 
 
-def output_for_r(mod, hum, out_f):
-	out = "model_human, training, transfer, congruous, timestep, pcorr, LL\n"
+
+
+
+def output_for_r(mod, hum, trans, out_f):
+	out = "model_human, training, transfer, ntrans, congruous, timestep, pcorr, LL\n"
 
 	seen = set()
 	cong_pairs = get_congruous()
@@ -134,14 +137,16 @@ def output_for_r(mod, hum, out_f):
 		logp = (nhum * log(min(1.0, pmod + sm)) +
 					 (ntot_hum - nhum) * log(min(1.0 - pmod + sm, 1.0)))
 		
-		out += ("%s, %s, %s, %d, %d, %f, %f\n" % (k[0], k[1],
-											 k[2], cong, k[3], 
+		ntr = trans[(k[1], k[2])]
+
+		out += ("%s, %s, %s, %d, %d, %d, %f, %f\n" % (k[0], k[1],
+											 k[2], ntr, cong, k[3], 
 											 pmod, logp))
 
 		if (k[1], k[2],k[3]) not in seen:
 			phum = nhum/float(ntot_hum)
 
-			out += "%s, %s, %s, %d, %d, %f, 0.0\n" % ("hum", k[1], k[2], 
+			out += "%s, %s, %s, %d, %d, %d, %f, 0.0\n" % ("hum", k[1], k[2], ntr,
 								cong, k[3], phum)
 			
 			seen.add((k[1], k[2],k[3]))
@@ -151,10 +156,29 @@ def output_for_r(mod, hum, out_f):
 	f.close()
 
 
+
+def get_transformations(file):
+	f = open(file, "r+")
+	l = f.readline()
+	l = f.readline()
+
+	dct = {}
+	while l != "":
+		r = l.split(",")
+
+		s1 = r[0].replace(" ", "")
+		s2 = r[1].replace(" ", "")
+		n = int(r[2].replace(" ", ""))
+		dct[(s1, s2)] = n
+		l = f.readline()
+	return dct
 if __name__ == "__main__":
 	mod_dat = get_model_data("out3.csv")
 	hum_dat = get_human_data("out_human.csv")
 	cong = get_congruous()
+	trans = get_transformations("transformations2.csv")
+	for d in trans:
+		print d, trans[d]
 
 	(rule, norm_rule, reuse, 
 		norm_reuse, none,norm_none, 
@@ -221,4 +245,4 @@ if __name__ == "__main__":
 	print z.count("none"), z.count("rrules"), z.count("reuse"), z.count("both")
 	print [-2 * x for x in [pnone, prrules, preuse, pboth]]
 
-	output_for_r(mod_dat, hum_dat, "r_analysis.csv")
+	output_for_r(mod_dat, hum_dat, trans, "r_analysis.csv")
